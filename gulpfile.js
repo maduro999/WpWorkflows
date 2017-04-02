@@ -1,6 +1,7 @@
- var gulp = require('gulp'),
+      var gulp = require('gulp'),
           gutil = require('gulp-util'),
           coffee = require('gulp-coffee'),
+          browserify = require('gulp-browserify'),
           concat = require('gulp-concat');
 
 
@@ -40,6 +41,7 @@ gulp.task('coffee', function(){
  gulp.task('js', function(){
     gulp.src(jsSources) //this is the array of scripts
      .pipe(concat('script.js')) //this will concatenate all the scripts into one script called script.js, which can then be linked in the html file
+     .pipe(browserify()) // this will send the file throught the browserify plugin
      .pipe(gulp.dest('builds/development/js')) //pick a destination path, in this case it the script.js will go to the js folder
  });
 
