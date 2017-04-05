@@ -2,6 +2,7 @@
           gutil = require('gulp-util'),
           coffee = require('gulp-coffee'),
           browserify = require('gulp-browserify'),
+          compass = require('gulp-compass'),
           concat = require('gulp-concat');
 
 
@@ -16,7 +17,7 @@ var jsSources = ['components/scripts/rclick.js',
                 'components/scripts/tagline.js',
                 'components/scripts/template.js'];
 
-
+var sassSources = ['components/sass/style.scss']
 
 gulp.task('coffee', function(){
      gulp.src(coffeeSources)
@@ -45,6 +46,31 @@ gulp.task('coffee', function(){
      .pipe(gulp.dest('builds/development/js')) //pick a destination path, in this case it the script.js will go to the js folder
  });
 
+
+/*
+gulp.task('compass', function(){
+    gulp.src(sassSources) //this is the array of scripts
+     .pipe(compass({ //saas requires a configuration file in order to process the scss file, but gulp can handle that configuration by creating an object of the compass variable
+        sass: 'components/sass', //the locations of the saas files
+        image: 'builds/development/images', //the location of the images
+        style: 'expanded' // the style of the css that will be generated, for develpment it's better to use expanded but when published it's better to use compact
+    })) //pipe the saasSources through compass
+     .on('error', gutil.log) //output error logs to the console
+     .pipe(gulp.dest('builds/development/css')) //Send to destination
+ });
+
+*/
+
+gulp.task('compass', function() {
+  gulp.src(sassSources)
+    .pipe(compass({
+      sass: 'components/sass',
+      image: 'builds/development/images',
+      style: 'expanded'
+    })
+    .on('error', gutil.log))
+    .pipe(gulp.dest('builds/development/css'))
+});
 
 
 
