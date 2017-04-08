@@ -3,6 +3,7 @@
           coffee = require('gulp-coffee'),
           browserify = require('gulp-browserify'),
           compass = require('gulp-compass'),
+          connect = require('gulp-connect'),
           concat = require('gulp-concat');
 
 
@@ -10,6 +11,7 @@
 var coffeeSources = ['components/coffee/tagline.coffee'] //array is not really needed, but used in cae you want to add multiple coffeescript files
 //var coffeeSources = ['components/coffee/tagline.coffee', 'Other file', 'Other file'] array is not really needed, but used in cae you want to add multiple coffeescript files
 //var coffeeSources = ['components/coffee/*.coffee'] //you can also use * which means any file with a .coffee extenssion
+var htmlSources = ['builds/development/*.html'];
 
 //The scripts below get processed in the order they are in the array
 var jsSources = ['components/scripts/rclick.js',
@@ -44,6 +46,7 @@ gulp.task('coffee', function(){
      .pipe(concat('script.js')) //this will concatenate all the scripts into one script called script.js, which can then be linked in the html file
      .pipe(browserify()) // this will send the file throught the browserify plugin
      .pipe(gulp.dest('builds/development/js')) //pick a destination path, in this case it the script.js will go to the js folder
+    .pipe(connect.reload())
  });
 
 
@@ -70,26 +73,45 @@ gulp.task('compass', function() {
     })
     .on('error', gutil.log))
     .pipe(gulp.dest('builds/development/css'))
+    .pipe(connect.reload())
 });
-
-//gulp.task('all', ['coffee', 'js', 'compass']);
-gulp.task('default', ['coffee', 'js', 'compass', 'watch']);
-
-
 
 
 gulp.task('watch', function(){
          gulp.watch(coffeeSources, ['coffee']); 
          gulp.watch(jsSources, ['js']); 
          gulp.watch('components/sass/*.scss', ['compass']);
+         gulp.watch(htmlSources,['html']); //any chages to the html files will result in calling the 'html' task, which will result in call the conect.reload method
+         gulp.watch('builds/development/js/*.json',['json']); 
      });
 
 
+gulp.task('connect', function(){
+    connect.server({
+    root:'builds/development/', //where the app is located -  here you specify where the files are that you want to run
+    livereload: true 
+    });
+});
+
+gulp.task('html', function(){
+    gulp.src(htmlSources)
+    .pipe(connect.reload())
+});
+
+gulp.task('json', function(){
+    gulp.src('builds/development/js/*.json')
+    .pipe(connect.reload())
+});
 
 
 
 
+//gulp.task('all', ['coffee', 'js', 'compass']);
+gulp.task('default', ['html', 'json', 'coffee', 'js', 'compass', 'connect', 'watch']);
+
+
+/*
  gulp.task('log', function(){
      gutil.log("Testing 123");  
  });
-
+*/
