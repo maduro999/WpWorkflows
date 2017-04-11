@@ -4,22 +4,43 @@
           browserify = require('gulp-browserify'),
           compass = require('gulp-compass'),
           connect = require('gulp-connect'),
+          gulpif = require('gulp-if'),
+          uglify = require('gulp-uglify'),
           concat = require('gulp-concat');
 
 
+var env,
+    coffeeSources,
+    sassSources,
+    htmlSources,
+    jsonSources,
+    outputDir,
+    sassStyle;
+
+env = process.env.NODE_ENV || 'development';
+
+if (env==='development') {
+  outputDir = 'builds/development/';
+  sassStyle = 'expanded';
+} else {
+  outputDir = 'builds/production/';
+  sassStyle = 'compressed';
+}
+
 //This way uses the src as a variable
-var coffeeSources = ['components/coffee/tagline.coffee'] //array is not really needed, but used in cae you want to add multiple coffeescript files
+coffeeSources = ['components/coffee/tagline.coffee'] //array is not really needed, but used in cae you want to add multiple coffeescript files
 //var coffeeSources = ['components/coffee/tagline.coffee', 'Other file', 'Other file'] array is not really needed, but used in cae you want to add multiple coffeescript files
 //var coffeeSources = ['components/coffee/*.coffee'] //you can also use * which means any file with a .coffee extenssion
-var htmlSources = ['builds/development/*.html'];
+htmlSources = [outputDir + '*.html'];
+jsonSources = [outputDir + 'js/*.json'];
 
 //The scripts below get processed in the order they are in the array
-var jsSources = ['components/scripts/rclick.js',
+jsSources = ['components/scripts/rclick.js',
                 'components/scripts/pixgrid.js',
                 'components/scripts/tagline.js',
                 'components/scripts/template.js'];
 
-var sassSources = ['components/sass/style.scss']
+sassSources = ['components/sass/style.scss'];
 
 gulp.task('coffee', function(){
      gulp.src(coffeeSources)
@@ -43,9 +64,10 @@ gulp.task('coffee', function(){
 
  gulp.task('js', function(){
     gulp.src(jsSources) //this is the array of scripts
-     .pipe(concat('script.js')) //this will concatenate all the scripts into one script called script.js, which can then be linked in the html file
-     .pipe(browserify()) // this will send the file throught the browserify plugin
-     .pipe(gulp.dest('builds/development/js')) //pick a destination path, in this case it the script.js will go to the js folder
+    .pipe(concat('script.js')) //this will concatenate all the scripts into one script called script.js, which can then be linked in the html file
+    .pipe(browserify()) // this will send the file throught the browserify plugin
+    .pipe(gulpif(env === 'production', uglify())) 
+    .pipe(gulp.dest(outputDir + 'js')) //pick a destination path, in this case it the script.js will go to the js folder
     .pipe(connect.reload())
  });
 
@@ -68,27 +90,27 @@ gulp.task('compass', function() {
   gulp.src(sassSources)
     .pipe(compass({
       sass: 'components/sass',
-      image: 'builds/development/images',
-      style: 'expanded'
+      image: outputDir + 'images',
+      style: sassStyle
     })
     .on('error', gutil.log))
-    .pipe(gulp.dest('builds/development/css'))
+    .pipe(gulp.dest(outputDir + 'css'))
     .pipe(connect.reload())
 });
-
 
 gulp.task('watch', function(){
          gulp.watch(coffeeSources, ['coffee']); 
          gulp.watch(jsSources, ['js']); 
          gulp.watch('components/sass/*.scss', ['compass']);
          gulp.watch(htmlSources,['html']); //any chages to the html files will result in calling the 'html' task, which will result in call the conect.reload method
-         gulp.watch('builds/development/js/*.json',['json']); 
+         gulp.watch(jsonSources,['json']); 
      });
 
 
 gulp.task('connect', function(){
     connect.server({
-    root:'builds/development/', //where the app is located -  here you specify where the files are that you want to run
+    //root:'builds/development/', //where the app is located -  here you specify where the files are that you want to run
+    root: outputDir,
     livereload: true 
     });
 });
@@ -99,7 +121,7 @@ gulp.task('html', function(){
 });
 
 gulp.task('json', function(){
-    gulp.src('builds/development/js/*.json')
+    gulp.src(jsonSources)
     .pipe(connect.reload())
 });
 
