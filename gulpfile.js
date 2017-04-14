@@ -6,6 +6,8 @@
           connect = require('gulp-connect'),
           gulpif = require('gulp-if'),
           uglify = require('gulp-uglify'),
+          minifyHTML = require('gulp-minify-html'),
+          jsonminify = require('gulp-jsonminify'),
           concat = require('gulp-concat');
 
 
@@ -36,17 +38,17 @@ jsonSources = [outputDir + 'js/*.json'];
 
 //The scripts below get processed in the order they are in the array
 jsSources = ['components/scripts/rclick.js',
-                'components/scripts/pixgrid.js',
-                'components/scripts/tagline.js',
-                'components/scripts/template.js'];
+            'components/scripts/pixgrid.js',
+            'components/scripts/tagline.js',
+            'components/scripts/template.js'];
 
 sassSources = ['components/sass/style.scss'];
 
 gulp.task('coffee', function(){
-     gulp.src(coffeeSources)
-          .pipe(coffee({bare: true}) 
-               .on('error', gutil.log)) 
-          .pipe(gulp.dest('components/scripts'))
+    gulp.src(coffeeSources)
+    .pipe(coffee({bare: true}) 
+    .on('error', gutil.log)) 
+    .pipe(gulp.dest('components/scripts'))
  });
 
 /*
@@ -99,12 +101,13 @@ gulp.task('compass', function() {
 });
 
 gulp.task('watch', function(){
-         gulp.watch(coffeeSources, ['coffee']); 
-         gulp.watch(jsSources, ['js']); 
-         gulp.watch('components/sass/*.scss', ['compass']);
-         gulp.watch(htmlSources,['html']); //any chages to the html files will result in calling the 'html' task, which will result in call the conect.reload method
-         gulp.watch(jsonSources,['json']); 
-     });
+    gulp.watch(coffeeSources, ['coffee']); 
+    gulp.watch(jsSources, ['js']); 
+    gulp.watch('components/sass/*.scss', ['compass']);
+    gulp.watch('builds/development/*.html',['html']); //any chages to the html files will result in calling the 'html' task, which will result in call the conect.reload method
+    gulp.watch('builds/development/js/*.json' ,['json']);
+    gulp.watch(jsonSources,['json']); 
+});
 
 
 gulp.task('connect', function(){
@@ -115,13 +118,18 @@ gulp.task('connect', function(){
     });
 });
 
-gulp.task('html', function(){
-    gulp.src(htmlSources)
+ gulp.task('html', function(){
+    gulp.src('builds/development/*.html')
+    .pipe(gulpif(env === 'production', minifyHTML ())) //this checks in the env is prod, if it is then run the minify variable object we declared 
+    .pipe(gulpif(env === 'production', gulp.dest(outputDir))) //send file to outputDir only if env is prod
     .pipe(connect.reload())
 });
 
+
 gulp.task('json', function(){
-    gulp.src(jsonSources)
+    gulp.src('builds/development/js/*.json')
+    .pipe(gulpif(env === 'production', jsonminify ())) //this checks in the env is prod, if it is then run the minify variable object we declared 
+    .pipe(gulpif(env === 'production', gulp.dest('builds/production/'))) //send file to the production/js folder only if env is prod
     .pipe(connect.reload())
 });
 
